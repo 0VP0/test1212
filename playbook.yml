@@ -1,0 +1,77 @@
+---
+- name: setup development environment
+  hosts: localhost
+  connection: local
+  become: yes
+  # ansible-playbook playbook.yml --ask-become-pass
+
+  vars_files:
+    - vars.yml
+
+  vars: 
+    install_essentials:
+      - curl
+      - apt-transport-https
+      - snapd
+      - git
+      - vim
+      - wireguard
+      - openresolv
+      - htop
+      - "{{ java_version }}"
+      - maven
+      
+
+
+      
+
+
+  tasks:
+    - name: Install_required_packages
+      become: yes
+      apt:
+        update_cache: yes
+        name: "{{ item }}"
+        state: present
+      loop: "{{ install_essentials }}"
+      tags:
+        - essentials
+
+
+    - name: Install_vscode
+      become: yes
+      sanpd: snap install --classic code
+      tags:
+        - essentials
+    
+
+
+
+  # roles:  
+  #   - role: docker
+  #     tags:
+  #       - docker
+
+  #   - role: postman
+  #     tags:
+  #       - postman
+
+  #   - role: nodejs
+  #     tags:
+  #       - nodejs
+
+  #   - role: poetry
+  #     tags:
+  #       - poetry
+
+  #   - role: jetbrains-toolbox
+  #     tags:
+  #       - jetbrains-toolbox
+
+  #   - role: flutter
+  #     tags:
+  #       - flutter
+
+  #   - role: kubectl
+  #     tags:
+  #       - kubectl

@@ -1,0 +1,31 @@
+---
+- name: Update apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags:
+    - poetry
+
+- name: Check if Poetry is already installed
+  command: poetry --version
+  register: poetry_check
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+  tags:
+    - poetry
+
+- name: Display Poetry installation status
+  debug:
+    msg: "Poetry is already installed"
+  when: poetry_check.rc == 0
+  tags:
+    - poetry
+
+- name: Install Poetry
+  become: yes
+  command: >
+    curl -sSL https://install.python-poetry.org | python3 -  
+  when: poetry_check.rc != 0
+  tags:
+    - poetry

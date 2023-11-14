@@ -1,0 +1,49 @@
+---
+- name: Check if Postman is already installed
+  stat:
+    path: "/opt/Postman"
+  register: postman_check
+  tags:
+    - postman
+
+- name: Display Postman installation status
+  debug:
+    msg: "Postman is already installed"
+  when: postman_check.stat.exists
+  tags:
+    - postman
+
+- name: Create Postman directory
+  become: yes
+  file:
+    path: "/opt/Postman"
+    state: directory
+  when: postman_check.stat.exists == false
+  tags:
+    - postman
+
+- name: Download Postman
+  get_url:
+    url: "https://dl.pstmn.io/download/latest/linux64"
+    dest: "/tmp/Postman-linux-x64-latest.tar.gz"
+  when: postman_check.stat.exists == false
+  tags:
+    - postman
+
+- name: Extract Postman
+  become: yes
+  shell: "tar -xf /tmp/Postman-linux-x64-latest.tar.gz --directory /opt/Postman --strip-components 1"
+  args:
+    creates: "/opt/Postman/Postman"
+  when: postman_check.stat.exists == false
+  tags:
+    - postman
+
+- name: Create symlink for Postman
+  file:
+    src: "/opt/Postman/Postman"
+    dest: "/usr/local/bin/postman"
+    state: link
+  when: postman_check.stat.exists == false
+  tags:
+    - postman

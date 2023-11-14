@@ -1,0 +1,57 @@
+---
+- name: Check if Flutter is already installed
+  stat:
+    path: "/opt/flutter/bin/flutter"
+  register: flutter_check
+  tags:
+    - flutter
+
+- name: Display Flutter installation status
+  debug:
+    msg: "Flutter is already installed"
+  when: flutter_check.stat.exists
+  tags:
+    - flutter
+
+- name: Create Flutter directory
+  become: yes
+  file:
+    path: "/opt/flutter"
+    state: directory
+  when: flutter_check.stat.exists == false
+  tags:
+    - flutter
+
+- name: Download Flutter SDK
+  get_url:
+    url: "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{{ flutter_version }}-stable.tar.xz"
+    dest: "/tmp/flutter.tar.xz"
+  when: flutter_check.stat.exists == false
+  tags:
+    - flutter
+
+- name: Extract Flutter SDK
+  become: yes
+  shell: "tar -xf /tmp/flutter.tar.xz --directory /opt"
+  args:
+    creates: "/opt/flutter/bin/flutter"
+  when: flutter_check.stat.exists == false
+  tags:
+    - flutter
+
+- name: Add Flutter to PATH
+  lineinfile:
+    path: "~/.bashrc"
+    line: 'export PATH="$PATH:/opt/flutter/bin"'
+    insertafter: EOF
+    state: present
+  register: bashrc
+  when: flutter_check.stat.exists == false
+  tags:
+    - flutter
+
+- name: Source the updated .bashrc
+  shell: "bash ~/.bashrc"
+  when: bashrc.changed
+  tags:
+    - flutter

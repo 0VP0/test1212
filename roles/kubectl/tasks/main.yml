@@ -1,0 +1,62 @@
+---
+- name: Update apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags:
+    - kubectl
+
+- name: Check if kubectl is already installed
+  command: kubectl version --client
+  register: kubectl_check
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+  tags:
+    - kubectl
+
+- name: Display kubectl installation status
+  debug:
+    msg: "kubectl is already installed"
+  when: kubectl_check.rc == 0
+  tags:
+    - kubectl
+
+- name: Fetch latest kubectl version
+  become: yes
+  command: >
+    curl -L -s https://dl.k8s.io/release/stable.txt
+  register: latest_kubectl_version
+  when: kubectl_check.rc != 0
+  tags:
+    - kubectl
+
+
+- name: Download kubectl binary
+  become: yes
+  get_url:
+    url: "https://dl.k8s.io/release/{{ latest_kubectl_version.stdout }}/bin/linux/amd64/kubectl"
+    dest: "/usr/local/bin/kubectl"
+    mode: '0755'
+  when: kubectl_check.rc != 0
+  tags:
+    - kubectl
+
+
+- name: Add kubectl bash completion to .bashrc
+  lineinfile:
+    path: ~/.bashrc
+    line: source <(kubectl completion bash)
+    state: present
+  register: bashrc
+  when: kubectl_check.rc != 0
+  tags:
+    - kubectl
+
+- name: Source the updated .bashrc
+  become: yes
+  shell: "bash ~/.bashrc"
+  when: bashrc.changed
+  when: kubectl_check.rc != 0
+  tags:
+    - kubectl

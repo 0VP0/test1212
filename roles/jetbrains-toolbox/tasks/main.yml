@@ -1,0 +1,38 @@
+---
+- name: Update apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags:
+    - jetbrains-toolbox
+
+- name: Check if JetBrains Toolbox is already installed
+  stat:
+    path: /usr/local/bin/jetbrains-toolbox
+  register: jetbrains_toolbox_check
+  tags:
+    - jetbrains_toolbox
+
+- name: Display JetBrains Toolbox installation status
+  debug:
+    msg: "JetBrains Toolbox is already installed"
+  when: jetbrains_toolbox_check.stat.exists
+  tags:
+    - jetbrains_toolbox
+
+- name: Download JetBrains Toolbox
+  get_url:
+    url: "https://download.jetbrains.com/toolbox/jetbrains-toolbox-{{ jetbrains_toolbox_version }}.tar.gz"
+    dest: "/tmp/jetbrains-toolbox.tar.gz"
+  when: jetbrains_toolbox_check.stat.exists == false
+  tags:
+    - jetbrains_toolbox
+
+- name: Extract JetBrains Toolbox
+  become: yes
+  shell: "tar -xf /tmp/jetbrains-toolbox.tar.gz --directory /usr/local/bin"
+  args:
+    creates: "/usr/local/bin/jetbrains-toolbox"
+  when: jetbrains_toolbox_check.stat.exists == false
+  tags:
+    - jetbrains_toolbox

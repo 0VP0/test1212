@@ -1,0 +1,8 @@
+---
+java_version: "openjdk-11-jdk"
+docker_version: "latest"
+postman_version: "latest"
+nodejs_version: "v20.9.0"
+kubectl_version: "latest"
+flutter_version: "3.13.9"
+jetbrains_toolbox_version: "2.0.5.17700"

@@ -1,0 +1,57 @@
+---
+- name: Check if Node.js is already installed
+  stat:
+    path: "/opt/nodejs/bin/node"
+  register: nodejs_check
+  tags:
+    - nodejs
+
+- name: Display Node.js installation status
+  debug:
+    msg: "Node.js is already installed"
+  when: nodejs_check.stat.exists
+  tags:
+    - nodejs
+
+- name: Create Node.js directory
+  become: yes
+  file:
+    path: "/opt/nodejs"
+    state: directory
+  when: nodejs_check.stat.exists == false
+  tags:
+    - nodejs
+
+- name: Download Node.js binary
+  get_url:
+    url: "https://nodejs.org/dist/{{ nodejs_version }}/node-{{ nodejs_version }}-linux-x64.tar.xz"
+    dest: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
+  when: nodejs_check.stat.exists == false
+  tags:
+    - nodejs
+
+- name: Extract Node.js binary
+  become: yes
+  shell: "tar -xf /tmp/node-{{ nodejs_version }}-linux-x64.tar.xz --directory /opt/nodejs --strip-components 1"
+  args:
+    creates: "/opt/nodejs/bin/node"
+  when: nodejs_check.stat.exists == false
+  tags:
+    - nodejs
+
+- name: Add Node.js to PATH
+  lineinfile:
+    path: "~/.bashrc"
+    line: 'export PATH="$PATH:/opt/nodejs/bin"'
+    insertafter: EOF
+    state: present
+  register: bashrc
+  when: nodejs_check.stat.exists == false
+  tags:
+    - nodejs
+
+- name: Source the updated .bashrc
+  shell: "bash ~/.bashrc"
+  when: bashrc.changed
+  tags:
+    - nodejs

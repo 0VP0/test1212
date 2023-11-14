@@ -1,0 +1,36 @@
+---
+- name: Update apt cache
+  become: yes
+  apt:
+    update_cache: yes
+  tags:
+    - docker
+
+- name: Check if Docker is already installed
+  command: docker --version
+  register: docker_check
+  tags:
+    - docker
+
+- name: Display Docker installation status
+  debug:
+    msg: "Docker is already installed"
+  when: docker_check.rc == 0
+  tags:
+    - docker
+
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+  when: docker_check.rc != 0
+  tags:
+    - docker
+
+- name: Start Docker Service
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+  tags:
+    - docker
